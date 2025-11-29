@@ -31,13 +31,13 @@ services:
       - "traefik.enable=true"
 
       # Routers
-      - "traefik.http.routers.whoami.rule=Host(`example.com`)"
+      - "traefik.http.routers.whoami.rule=Host(`test.derekmacrae.com`)"
       - "traefik.http.routers.whoami.entrypoints=websecure"
       - "traefik.http.routers.whoami.tls=true"
       - "traefik.http.routers.whoami.tls.certresolver=cloudflare"
 
       # Optional HTTP → HTTPS redirect
-      - "traefik.http.routers.whoami-http.rule=Host(`example.com`)"
+      - "traefik.http.routers.whoami-http.rule=Host(`test.derekmacrae.com`)"
       - "traefik.http.routers.whoami-http.entrypoints=web"
       - "traefik.http.routers.whoami-http.middlewares=redirect-https"
       - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
