@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+  traefik:
+    image: traefik:v3.1  # or current stable
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - --configFile=/etc/traefik/traefik.yaml
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+      # Optionally tell lego which cloudflare env var to use, but
+      # for traefik v2/v3 this is auto-detected:
+      # - LEGO_CA_CERTIFICATES=/etc/ssl/certs/ca-certificates.crt
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - ./traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./letsencrypt:/letsencrypt
+    networks:
+      - web
+
+  # Example web app behind Traefik
+  whoami:
+    image: traefik/whoami
+    container_name: whoami
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+
+      # Routers
+      - "traefik.http.routers.whoami.rule=Host(`example.com`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls=true"
+      - "traefik.http.routers.whoami.tls.certresolver=cloudflare"
+
+      # Optional HTTP → HTTPS redirect
+      - "traefik.http.routers.whoami-http.rule=Host(`example.com`)"
+      - "traefik.http.routers.whoami-http.entrypoints=web"
+      - "traefik.http.routers.whoami-http.middlewares=redirect-https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+
+      # Optionally specify which network Traefik should use
+      - "traefik.docker.network=web"
+    networks:
+      - web
+
+networks:
+  web:
+    external: false
